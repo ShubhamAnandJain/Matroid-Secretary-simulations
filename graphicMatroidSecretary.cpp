@@ -26,6 +26,7 @@ struct DisjointSetUnion{
 		}
 	}	
 
+
 	int find(int node){
 		if(par[node] == node) return node;
 		return par[node] = find(par[node]);
@@ -72,9 +73,6 @@ double max_weight_kruskal(int n, set<pair<double,pair<int,int>>> edges){
 }
 
 double perform_experiment(int n, double factor){
-
-	// Runs one instance of the secretary problem
-	// Returns 1 if best is hired, 0 if not
 
 	// uniform_real_distribution<double> unif(0, 1); // ready to generate random numbers
 	normal_distribution<double> gaussian(0,1.0);
