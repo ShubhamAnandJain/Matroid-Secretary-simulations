@@ -15,72 +15,6 @@ using namespace __gnu_pbds;
 
 mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
-// Max matching 
-//1 indexed Hopcroft-Karp Matching in O(E sqrtV)
-struct Hopcroft_Karp{
-	static const int inf = 1e9;
-	int n;
-	vector<int> matchL, matchR, dist;
-	vector<vector<int> > g;
-	Hopcroft_Karp(int n):n(n),matchL(n+1),matchR(n+1),dist(n+1),g(n+1){}
-	void addEdge(int u, int v){
-		g[u].push_back(v);
-	}
-	void remove(int u){
-		g[u].clear();
-	}
-	bool bfs(){
-		queue<int> q;
-		for(int u=1;u<=n;u++){
-			if(!matchL[u]){
-				dist[u]=0;
-				q.push(u);
-			}else dist[u]=inf;
-		}
-		dist[0]=inf;
-		while(!q.empty()){
-			int u=q.front();
-			q.pop();
-			for(auto v:g[u]){
-				if(dist[matchR[v]] == inf){
-					dist[matchR[v]] = dist[u] + 1;
-					q.push(matchR[v]);
-				}
-			}
-		}
-		return (dist[0]!=inf);
-	}
-	bool dfs(int u){
-		if(!u) return true;
-		for(auto v:g[u]){
-			if(dist[matchR[v]] == dist[u]+1 &&dfs(matchR[v])){
-				matchL[u]=v;
-				matchR[v]=u;
-				return true;
-			}
-		}
-		dist[u]=inf;
-		return false;
-	}
-	int max_matching(){
-
-		for(int i = 0; i <= n; i++){
-			matchL[i] = 0;
-			matchR[i] = 0;
-			dist[i] = 0;
-		}
-
-		int matching=0;
-		while(bfs()){
-			for(int u=1;u<=n;u++){
-				if(!matchL[u])
-					if(dfs(u)) matching++;
-			}
-		}
-		return matching;
-	}
-};
-
 struct Hungarian{
 	vector<vector<double>> costmatrix;
 	vector<double> u, v;
@@ -155,67 +89,50 @@ double perform_experiment(int n, double p, double factor){
 	normal_distribution<double> gaussian(0,1.0); // ready to generate edge weights
 
 	Hungarian weightedmatch(n,n);
-	Hopcroft_Karp chkindset(n+n); // n left nodes + n right nodes
 
-	bool edge[n][n];
-	double vertexwt[n] = {0};
+	double edgeweight[n][n];
 	vector<int> adj[n]; // adjacency matrix 
 
 	for(int i = 0; i < n; i++){
 		for(int j = 0; j < n; j++){
-			edge[i][j] = 0; // initially edge does not exist
+			edgeweight[i][j] = 0; // initially edge does not exist
 			if(unif(rng) <= p){
-				edge[i][j] = 1;
-				edge[j][i] = 1;
+				edgeweight[i][j] = abs(gaussian(rng));
 				adj[i].push_back(j);
 			}
 		}
-		vertexwt[i] = abs(gaussian(rng));
 	}
 
 	for(int i = 0; i < samplesize; i++){
 		for(auto &v: adj[i]){
-			weightedmatch.addEdge(v+1,i+1,-vertexwt[i]);
+			weightedmatch.addEdge(v+1,i+1,-edgeweight[i][v]);
 		}
 	}
 
 	int taken = 0;
 
 	double curtotal = 0, opt = 0;
+	bool assignedr[n] = {0};
 
 	for(int i = samplesize; i < n; i++){
-
 		for(auto &v: adj[i]){
-			chkindset.addEdge(i+1,n+v+1);
-			weightedmatch.addEdge(v+1,i+1,-vertexwt[i]);
+			weightedmatch.addEdge(v+1,i+1,-edgeweight[i][v]);
 		}
-
-		int chkind = chkindset.max_matching();
-		if(chkind != taken+1){
-			chkindset.remove(i+1);
-			continue;
-		}
-
 		weightedmatch.solveAssignmentProblem();
 		
 		int rightmatch = weightedmatch.p[i+1];
-		if(rightmatch != 0 && edge[i][rightmatch-1] == 1){
+		if(rightmatch != 0 && assignedr[rightmatch-1] == 0 && edgeweight[i][rightmatch-1]>1e-9){
+			assignedr[rightmatch-1] = 1;
 			taken++;
-			curtotal += vertexwt[i];
+			curtotal += edgeweight[i][rightmatch-1];
 		}	
-		else{
-			chkindset.remove(i+1);
-		}
 	}
 
 
 	opt = weightedmatch.solveAssignmentProblem();
 	opt = -opt;
 
-	if(abs(opt)<1e-9){
-		return 1;	
-	} 
-	assert(curtotal <= opt+1e-9);
+	if(abs(opt)<1e-9) return 1;
 	return (curtotal/opt);
 }
 
@@ -226,9 +143,9 @@ int main()
 	int iter = 10;
 	int n = 50;
 	double factor = exp(-1); 
-	double lower = 0.001;
-	double upper = 1;
-	double stepsize = 0.001;
+	double lower = 0.01;
+	double upper = 0.1;
+	double stepsize = 0.01;
 	
 	for(double p = lower; p <= upper; p += stepsize){
 		double countsuccess = 0;
