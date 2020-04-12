@@ -14,6 +14,7 @@ bool perform_experiment(int n){
 	// Returns 1 if best is hired, 0 if not
 
 	uniform_real_distribution<long double> unif(0, 1); // ready to generate random numbers
+	// normal_distribution<long double> gaussian(0,100);
 
 	long double e = exp(1);
 

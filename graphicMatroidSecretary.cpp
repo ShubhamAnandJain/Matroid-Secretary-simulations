@@ -76,8 +76,8 @@ double perform_experiment(int n, double factor){
 	// Runs one instance of the secretary problem
 	// Returns 1 if best is hired, 0 if not
 
-	uniform_real_distribution<double> unif(0, 1); // ready to generate random numbers
-	// normal_distribution<double> gaussian(0,1.0);
+	// uniform_real_distribution<double> unif(0, 1); // ready to generate random numbers
+	normal_distribution<double> gaussian(0,1.0);
 
 	int m = n*(n-1)/2; // Number of edges
 
@@ -89,9 +89,9 @@ double perform_experiment(int n, double factor){
 
 	for(int i = 0; i < n; i++){
 		for(int j = 0; j < i; j++){
-			edgeweights[i][j] = abs(unif(rng));
+			edgeweights[i][j] = abs(gaussian(rng));
 			edgeorder.push_back(make_pair(i,j));
-			if(i == 1 && j == 0) edgeweights[i][j] = 1e9; 
+			// if(i == 1 && j == 0) edgeweights[i][j] = 1e9; 
 		}
 	}
 
@@ -133,7 +133,7 @@ int main()
 	int lower = 100;
 	int upper = 100;
 	int stepsize = 10;
-	double factor = 0.5;
+	double factor = exp(-1);
 
 	for(int n = lower; n <= upper; n += stepsize){
 		double countsuccess = 0;
