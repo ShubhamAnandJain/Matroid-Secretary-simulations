@@ -100,7 +100,7 @@ struct MinCostFlow{
 	    if (flow < K)
 	        return make_pair(1,0);
 	    else
-	    	if(capacity[target.from][target.to] == 0){
+	    	if(capacity[target.from][target.to] < 1e-9){
 	    		return make_pair(cost,1);
 	    	}
 	    	else{
@@ -236,6 +236,12 @@ double perform_experiment(int n, int s, int t, double p, double factor){
 		}
 	}
 
+	// for(int i = 0; i < s+n+t; i++){
+	// 	for(int j = 0; j < s+n+t; j++){
+	// 		if(edgeweight[i][j]) cout<<"edge "<<i<<" "<<j<<endl;
+	// 	}
+	// }
+
 	vector<Edge> edges;
 
 	for(int i = s; i < s+n; i++){
@@ -348,6 +354,7 @@ double perform_experiment(int n, int s, int t, double p, double factor){
 		}
 
 		if(chkindset.max_flow(0,s+n+t+1) != taken+1){
+			// cout<<"wut lol "<<i<<endl;
 			chkindset.capacity[0][i+1] = 0;
 			for(int j = s; j < n+s+t; j++){
 				if(edgeweight[i][j] == 1){
@@ -363,7 +370,7 @@ double perform_experiment(int n, int s, int t, double p, double factor){
 		double mx = -1e9;
 		bool isinc = 0;
 
-		for(int j = 1; j <= taken+1; j++){
+		for(int j = 1; j <= s; j++){
 			pair<double,bool> costchk = maxweightindset.min_cost_flow(1+n+s+t+1+numedges,
 				edges,j,0,n+s+t+1,target);
 			if((mx < -costchk.first) || (mx == -costchk.first && costchk.second == 1)){
@@ -401,6 +408,12 @@ double perform_experiment(int n, int s, int t, double p, double factor){
 	if(opt<1e-9){
 		return 1;
 	}
+
+	// cout<<samplesize<<endl;
+	// for(int i = 0; i < s; i++) cout<<i<<" "<<vertexwt[i]<<endl;
+
+	// cout<<"try "<<curtotal<<" "<<opt<<endl;
+
 	return (curtotal/opt);
 }
 
@@ -408,19 +421,20 @@ double perform_experiment(int n, int s, int t, double p, double factor){
 int main()
 {
 
-	int iter = 10;
-	int n = 20;
+	int iter = 100;
+	int n = 10;
 	int s = 50;
-	int t = 20;
+	int t = 5;
 	double factor = exp(-1); 
-	double lower = 0.01;
-	double upper = 0.1;
-	double stepsize = 0.01;
+	double lower = 0.3;
+	double upper = 0.3;
+	double stepsize = 0.3;
 	
 	for(double p = lower; p <= upper; p += stepsize){
 		double countsuccess = 0;
 		for(int j = 0; j < iter; j++){
 			countsuccess += perform_experiment(n,s,t,p,factor);
+			cout<<"running success iteration "<<j+1<<" "<<countsuccess/(j+1)<<endl;
 		}
 		cout<<n<<", "<<p<<", "<<(double)countsuccess/iter<<endl;
 	}
