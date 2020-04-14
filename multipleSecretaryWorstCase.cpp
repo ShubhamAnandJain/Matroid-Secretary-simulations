@@ -74,7 +74,7 @@ int main()
 	//for (int i=0; i<n; i++) cout << ranks[i] << ' ';
 	//cout << '\n';
 	
-	cout << "n \t k \t best_comp_ratio  best_sample_factor \n";
+	cout << "n k best_comp_ratio best_sample_factor\n";
 	for(int k=1; k<n/2; k++){
 		double best_comp_ratio=0;
 		double bestSampleSize=0;
@@ -92,7 +92,7 @@ int main()
 			}
 		}
 		best_sample_factor = bestSampleSize/n;
-		cout << n << " \t " << k << " \t " << best_comp_ratio/k << "\t\t" <<  bestSampleSize/n << '\n';
+		cout << n << " " << k << " " << best_comp_ratio/k << " " <<  bestSampleSize/n << '\n';
 	}
 	//double avg_comp_ratio=0;
 	//
