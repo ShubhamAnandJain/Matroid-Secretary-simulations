@@ -40,7 +40,7 @@ def compute_RMSE(phi, w, y):
 	return error[0]
 
 def main():
-	phi, y1, y2 = get_features('results_120.txt')
+	phi, y1, y2 = get_features('result_120')
 
 	w1 = closed_soln(phi,y1)
 	w2 = closed_soln(phi,y2)

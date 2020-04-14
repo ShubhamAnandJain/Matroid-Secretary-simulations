@@ -7,12 +7,12 @@
 #include<utility>
 using namespace std;
 
-// mt19937_64 rng;
+mt19937_64 rng;
 // initialize the random number generator with time-dependent seed
 // uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 // seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed>>32)};
-
-mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+seed_seq ss{uint32_t(0xffffffff), uint32_t(1)};
+// mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
 struct DisjointSetUnion{
 
@@ -74,10 +74,10 @@ double max_weight_kruskal(int n, set<pair<double,pair<int,int>>> edges){
 
 double perform_experiment(int n, double factor){
 
-	// uniform_real_distribution<double> unif(0, 1); // ready to generate random numbers
-	normal_distribution<double> gaussian(0,1.0);
+	uniform_real_distribution<double> unif(0, 1); // ready to generate random numbers
+	// normal_distribution<double> gaussian(0,1.0);
 
-	int m = n*(n-1)/2; // Number of edges
+	int m = min(n*(n-1)/2,n+10); // Number of edges
 
 	int samplesize = m*factor;
 	set<pair<double,pair<int,int>>> edges; //Maintains a running total of edge weights
@@ -87,9 +87,8 @@ double perform_experiment(int n, double factor){
 
 	for(int i = 0; i < n; i++){
 		for(int j = 0; j < i; j++){
-			edgeweights[i][j] = abs(gaussian(rng));
+			edgeweights[i][j] = abs(unif(rng));
 			edgeorder.push_back(make_pair(i,j));
-			// if(i == 1 && j == 0) edgeweights[i][j] = 1e9; 
 		}
 	}
 
@@ -105,7 +104,6 @@ double perform_experiment(int n, double factor){
 	double curtotal = 0;
 
 	for(int i = samplesize; i < m; i++){
-		// if(i%100 == 0) cout<<i<<endl;
 		int node1 = edgeorder[i].first;
 		int node2 = edgeorder[i].second;
 		edges.insert(make_pair(-edgeweights[node1][node2],edgeorder[i]));
@@ -118,7 +116,6 @@ double perform_experiment(int n, double factor){
 	}
 
 	double opt = max_weight_kruskal(n,edges);
-
 	if(abs(opt)<1e-9) return 1;
 	return (curtotal/opt);
 }
@@ -127,9 +124,9 @@ double perform_experiment(int n, double factor){
 int main()
 {
 
-	int iter = 100; 
-	int lower = 100;
-	int upper = 100;
+	int iter = 10; 
+	int lower = 500;
+	int upper = 500;
 	int stepsize = 10;
 	double factor = exp(-1);
 

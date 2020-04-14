@@ -3,10 +3,7 @@
 #include<random>
 #include<chrono>
 #include<queue>
-#include <ext/pb_ds/assoc_container.hpp> // Common file
-#include <ext/pb_ds/tree_policy.hpp> // Including tree_order_statistics_node_update
 using namespace std;
-using namespace __gnu_pbds;
 
 // mt19937_64 rng;
 // // initialize the random number generator with time-dependent seed
