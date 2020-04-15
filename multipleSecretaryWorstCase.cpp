@@ -63,11 +63,12 @@ int main()
 
 	int n = 100;
 	int iter = n*n;
+	int n_by_e = n*exp(-1);
+	int n_by_k = 3;
 	//int k = 1;
 	//int sampleSize=7;
 
 	srand(time(0));  // Initialize random number generator.
-	int ranks[n];
 	
 	//random_perm(ranks, n);
 	
@@ -75,11 +76,14 @@ int main()
 	//cout << '\n';
 	
 	cout << "n \t k \t best_comp_ratio  best_sample_factor \n";
-	for(int k=1; k<n/2; k++){
+	
+	for(int k=1; k<n; k=k+1){
+		iter = n*n;
+		int ranks[n];
 		double best_comp_ratio=0;
 		double bestSampleSize=0;
-		double best_sample_factor;
-		for(int sampleSize=1; sampleSize<=n-k; sampleSize++){
+
+		for(int sampleSize=1; sampleSize<=n-1; sampleSize++){
 			double avg_comp_ratio=0;
 			for(int i=0; i<iter; i++){
 				random_perm(ranks, n);
@@ -91,7 +95,7 @@ int main()
 				bestSampleSize=sampleSize;
 			}
 		}
-		best_sample_factor = bestSampleSize/n;
+
 		cout << n << " \t " << k << " \t " << best_comp_ratio/k << "\t\t" <<  bestSampleSize/n << '\n';
 	}
 	//double avg_comp_ratio=0;
