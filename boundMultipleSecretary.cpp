@@ -3,7 +3,7 @@
 using namespace std;
 
 long double fastpow(long double a, int p){
-	cout<<a<<" "<<p<<endl;
+	// cout<<a<<" "<<p<<endl;
 	if(p == 0) return 1;
 	long double z = fastpow(a,p/2);
 	z = z*z;
