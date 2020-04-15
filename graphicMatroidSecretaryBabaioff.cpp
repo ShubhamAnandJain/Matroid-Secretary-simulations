@@ -96,7 +96,11 @@ double perform_experiment(int n, double factor){
 	uniform_real_distribution<double> unif(0, 1); // ready to generate random numbers
 	// normal_distribution<double> gaussian(0,1.0);
 
-	int m = min(n*(n-1)/2,n+10); // Number of edges
+	uniform_real_distribution<double> unif1(0.001, 0.002);
+	uniform_real_distribution<double> unif2(0.002, 0.003);
+
+	int m = n*(n-1)/2; // Number of edges
+	m = 2*(n-2)+1;
 
 	int samplesize = m*factor;
 	set<pair<double,pair<int,int>>> edges; //Maintains a running total of edge weights
@@ -107,9 +111,26 @@ double perform_experiment(int n, double factor){
 	insample[n][n] = 1;
 
 	for(int i = 0; i < n; i++){
-		for(int j = 0; j < i; j++){
+		for(int j = 0; j < n; j++){
 			insample[i][j] = 0;
-			edgeweights[i][j] = abs(unif(rng));
+			edgeweights[i][j] = 0;
+		}
+	}
+
+	// for(int i = 0; i < n; i++){
+	// 	for(int j = 0; j < i; j++){
+	// 		insample[i][j] = 0;
+	// 		edgeweights[i][j] = abs(unif(rng));
+	// 		edgeweights[i][j] = 1e5;
+	// 		edgeorder.push_back(make_pair(i,j));
+	// 	}
+	// }
+
+	for(int i = 0; i < 2; i++){
+		for(int j = i+1; j < n; j++){
+			if(i == 0 && j == 1) edgeweights[i][j] = n-1;
+			else if(i == 0) edgeweights[i][j] = unif1(rng);
+			else if(i == 1) edgeweights[i][j] = unif2(rng);
 			edgeorder.push_back(make_pair(i,j));
 		}
 	}
@@ -126,7 +147,6 @@ double perform_experiment(int n, double factor){
 	set<pair<double,pair<int,int>>> indsetsample = kruskal_get_edges(n,edges);
 	set<pair<double,pair<int,int>>> indsetchose;
 	double curtotal = 0;
-
 	for(int i = samplesize; i < m; i++){
 		int node1 = edgeorder[i].first;
 		int node2 = edgeorder[i].second;
@@ -145,6 +165,8 @@ double perform_experiment(int n, double factor){
 
 	double opt = max_weight_kruskal(n,edges);
 
+	// cout<<curtotal<<" "<<opt<<endl;
+
 	if(abs(opt)<1e-9) return 1;
 	return (curtotal/opt);
 }
@@ -153,9 +175,9 @@ double perform_experiment(int n, double factor){
 int main()
 {
 
-	int iter = 10; 
-	int lower = 500;
-	int upper = 500;
+	int iter = 1000; 
+	int lower = 50;
+	int upper = 50;
 	int stepsize = 10;
 	double factor = exp(-1);
 
@@ -163,7 +185,7 @@ int main()
 		double countsuccess = 0;
 		for(int j = 0; j < iter; j++){
 			countsuccess += perform_experiment(n, factor);
-			cout<<"iteration number "<<j<<" current success "<<(double)countsuccess/(j+1)<<endl;
+			// cout<<"iteration number "<<j<<" current success "<<(double)countsuccess/(j+1)<<endl;
 		}
 		cout<<n<<", "<<(double)countsuccess/iter<<endl;
 	}
