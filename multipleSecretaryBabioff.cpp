@@ -13,7 +13,7 @@ seed_seq ss{uint32_t(0xffffffff), uint32_t(1)};
 
 // mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
-typedef tree<double, null_type, greater<double>, rb_tree_tag, 
+typedef tree<pair<double,int>, null_type, greater<pair<double,int>>, rb_tree_tag, 
 tree_order_statistics_node_update> ordered_set;
 
 double perform_experiment(int n, int k, double factor){
@@ -42,17 +42,17 @@ double perform_experiment(int n, int k, double factor){
 	ordered_set curnumbers;
 
 	for(int i = 0; i < samplesize; i++){
-		curnumbers.insert(generatednumbers[i]);
+		curnumbers.insert(make_pair(generatednumbers[i],i));
 	}
 
 	for(int i = samplesize; i < n; i++){
-		if(taken<k){
-			if(curnumbers.size()<k || (generatednumbers[i]>*curnumbers.find_by_order(k-1))){
-				taken++;
-				curtotal += generatednumbers[i];
-			}
+		if(curnumbers.size()<k || 
+			((generatednumbers[i]>(*curnumbers.find_by_order(k-1)).first)
+			 &&(*curnumbers.find_by_order(k-1)).second<samplesize)){
+			taken++;
+			curtotal += generatednumbers[i];
 		}
-		curnumbers.insert(generatednumbers[i]);
+		curnumbers.insert(make_pair(generatednumbers[i],i));
 	}
 
 	return (curtotal/opt);
@@ -63,7 +63,7 @@ int main()
 {
 
 	int iter = 40;
-	int n = 1000; 
+	int n = 1000;
 	
 	cout<<"n k comp ratio samplefactor"<<endl;
 

@@ -10,8 +10,7 @@ using namespace std;
 mt19937_64 rng;
 // initialize the random number generator with time-dependent seed
 // uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-// seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed>>32)};
-seed_seq ss{uint32_t(0xffffffff), uint32_t(1)};
+seed_seq ss{uint32_t(0xffffffff), uint32_t(1)}; //For fixed seed
 // mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
 struct DisjointSetUnion{
@@ -44,19 +43,28 @@ struct DisjointSetUnion{
 };
 
 
-bool kruskal(int n, set<pair<double,pair<int,int>>> edges, pair<int,int> target){
+pair<double,pair<int,int>> kruskal(int n, set<pair<double,pair<int,int>>> indsetsample, 
+	set<pair<double,pair<int,int>>> indsetchose, pair<double,pair<int,int>> current){
 
 	// Input edges should be sorted in decreasing order
 	// For this, we put the edge weights as negative of the true weight
 
 	DisjointSetUnion dsu(n);
 
-	for(auto &v : edges){
-		if(v.second == target){
-			return dsu.unite(v.second.first, v.second.second);
-		}
+	for(auto &v : indsetchose){
 		dsu.unite(v.second.first, v.second.second);
 	}
+	if(dsu.unite(current.second.first,current.second.second) == 0){
+		return current;
+	}
+	for(auto &v : indsetsample){
+		if(dsu.unite(v.second.first, v.second.second) == 0){
+			if(-v.first < -current.first) return v;
+			return current;
+		}
+	}
+
+	return make_pair(0,make_pair(n,n));
 }
 
 double max_weight_kruskal(int n, set<pair<double,pair<int,int>>> edges){
@@ -72,22 +80,57 @@ double max_weight_kruskal(int n, set<pair<double,pair<int,int>>> edges){
 	return currtot;
 }
 
+set<pair<double,pair<int,int>>> kruskal_get_edges(int n, set<pair<double,pair<int,int>>> edges){
+
+	DisjointSetUnion dsu(n);
+	set<pair<double,pair<int,int>>> taken;
+
+	for(auto &v : edges){
+		if(dsu.unite(v.second.first,v.second.second)) taken.insert(v);
+	}
+	return taken;
+}
+
 double perform_experiment(int n, double factor){
 
 	uniform_real_distribution<double> unif(0, 1); // ready to generate random numbers
 	// normal_distribution<double> gaussian(0,1.0);
 
-	int m = min(n*(n-1)/2,n+10); // Number of edges
+	uniform_real_distribution<double> unif1(0.001, 0.002);
+	uniform_real_distribution<double> unif2(0.002, 0.003);
+
+	int m = n*(n-1)/2; // Number of edges
+	m = 2*(n-2)+1;
 
 	int samplesize = m*factor;
 	set<pair<double,pair<int,int>>> edges; //Maintains a running total of edge weights
 
 	double edgeweights[n][n];
+	bool insample[n+1][n+1];
 	vector<pair<int,int>> edgeorder;
+	insample[n][n] = 1;
 
 	for(int i = 0; i < n; i++){
-		for(int j = 0; j < i; j++){
-			edgeweights[i][j] = abs(unif(rng));
+		for(int j = 0; j < n; j++){
+			insample[i][j] = 0;
+			edgeweights[i][j] = 0;
+		}
+	}
+
+	// for(int i = 0; i < n; i++){
+	// 	for(int j = 0; j < i; j++){
+	// 		insample[i][j] = 0;
+	// 		edgeweights[i][j] = abs(unif(rng));
+	// 		edgeweights[i][j] = 1e5;
+	// 		edgeorder.push_back(make_pair(i,j));
+	// 	}
+	// }
+
+	for(int i = 0; i < 2; i++){
+		for(int j = i+1; j < n; j++){
+			if(i == 0 && j == 1) edgeweights[i][j] = n-1;
+			else if(i == 0) edgeweights[i][j] = unif1(rng);
+			else if(i == 1) edgeweights[i][j] = unif2(rng);
 			edgeorder.push_back(make_pair(i,j));
 		}
 	}
@@ -97,25 +140,33 @@ double perform_experiment(int n, double factor){
 	for(int i = 0; i < samplesize; i++){
 		int node1 = edgeorder[i].first;
 		int node2 = edgeorder[i].second;
+		insample[node1][node2] = 1;
 		edges.insert(make_pair(-edgeweights[node1][node2],edgeorder[i]));
 	}
 
-	DisjointSetUnion indset(n);
+	set<pair<double,pair<int,int>>> indsetsample = kruskal_get_edges(n,edges);
+	set<pair<double,pair<int,int>>> indsetchose;
 	double curtotal = 0;
-
 	for(int i = samplesize; i < m; i++){
 		int node1 = edgeorder[i].first;
 		int node2 = edgeorder[i].second;
-		edges.insert(make_pair(-edgeweights[node1][node2],edgeorder[i]));
-		if(indset.find(node1) == indset.find(node2)) continue;
-		bool toadd = kruskal(n, edges, edgeorder[i]);
-		if(toadd){
-			indset.unite(node1,node2);
+		pair<double,pair<int,int>> curr = make_pair(-edgeweights[node1][node2],make_pair(node1,node2));
+
+		edges.insert(curr);
+		pair<double,pair<int,int>> checkedge = kruskal(n,indsetsample, indsetchose, curr);
+		
+		if(insample[checkedge.second.first][checkedge.second.second]){
 			curtotal += edgeweights[node1][node2];
-		} 
+			indsetchose.insert(curr);
+			if(checkedge.second.first == n) continue;
+			indsetsample.erase(checkedge);
+		}
 	}
 
 	double opt = max_weight_kruskal(n,edges);
+
+	// cout<<curtotal<<" "<<opt<<endl;
+
 	if(abs(opt)<1e-9) return 1;
 	return (curtotal/opt);
 }
@@ -124,9 +175,9 @@ double perform_experiment(int n, double factor){
 int main()
 {
 
-	int iter = 10; 
-	int lower = 500;
-	int upper = 500;
+	int iter = 1000; 
+	int lower = 50;
+	int upper = 50;
 	int stepsize = 10;
 	double factor = exp(-1);
 
@@ -134,7 +185,7 @@ int main()
 		double countsuccess = 0;
 		for(int j = 0; j < iter; j++){
 			countsuccess += perform_experiment(n, factor);
-			cout<<"iteration number "<<j<<" current success "<<(double)countsuccess/(j+1)<<endl;
+			// cout<<"iteration number "<<j<<" current success "<<(double)countsuccess/(j+1)<<endl;
 		}
 		cout<<n<<", "<<(double)countsuccess/iter<<endl;
 	}
