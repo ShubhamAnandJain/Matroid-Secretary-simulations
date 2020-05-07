@@ -226,9 +226,9 @@ int main()
 	int iter = 10;
 	int n = 50;
 	double factor = exp(-1); 
-	double lower = 0.001;
-	double upper = 1;
-	double stepsize = 0.001;
+	double lower = 0.1;
+	double upper = 0.1;
+	double stepsize = 0.1;
 	
 	for(double p = lower; p <= upper; p += stepsize){
 		double countsuccess = 0;
