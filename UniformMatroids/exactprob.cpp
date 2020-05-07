@@ -18,18 +18,26 @@ tree_order_statistics_node_update> ordered_set;
 
 vector<double> prob;
 
-double getprob(int position, int taken, int target){
-	// cout<<position<<" "<<taken<<" "<<target<<endl;
-	if(taken > target) return 0;
-	if(position == prob.size() && taken != target){
-		return 0;
+double getprob(int target){
+	
+	int sz = prob.size();
+	double dp[sz+1][target+1];
+	for(int i = 0; i < sz+1; i++){
+		for(int j = 0; j < target+1; j++){
+			dp[i][j] = 0;
+		}
 	}
-	else if(position == prob.size()){
-		return 1;
+	dp[0][0] = 1;
+	for(int i = 1; i <= sz; i++){
+		for(int j = 0; j < target+1; j++){
+			if(j != 0) dp[i][j] += prob[i-1]*dp[i-1][j-1];
+			dp[i][j] += (1-prob[i-1])*dp[i-1][j];
+		}
 	}
+
 	double total = 0;
-	total += prob[position]*getprob(position+1,taken+1,target);
-	total += (1-prob[position])*getprob(position+1,taken,target);
+	for(int i = 0; i <= target; i++) total += dp[sz][i];
+
 	return total;
 }
 
@@ -42,9 +50,7 @@ double perform_experiment(int n, int k, int sample){
 
 	for(int i = sample+1; i <= n; i++){
 		double p = min(1.0,(double)k/i);
-		for(int take = 0; take < min(1+(int)prob.size(),k); take++){
-			total += 1.0/n*getprob(0,0,take);
-		}
+		total += 1.0/n*getprob(min((int)prob.size(),k-1));
 		prob.push_back(p);
 	}
 
@@ -55,7 +61,7 @@ double perform_experiment(int n, int k, int sample){
 int main()
 {
 
-	int n = 20; 
+	int n = 150; 
 	
 	cout<<"n k comp ratio samplefactor"<<endl;
 
